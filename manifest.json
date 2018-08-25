@@ -1,0 +1,27 @@
+{
+  "name": "Bolha Social",
+  "description": "Extensão para analisar o seu histórico mostrando seu comportamento na internet",
+  "short_description": "Extensão para analisar o seu histórico mostrando seu comportamento na internet",
+  "version": "0.0.10",
+  "incognito": "split",
+  "background": {
+    "page": "background.html"
+  },
+  "permissions": ["history", "storage"],
+  "icons": {
+    "16": "icon_16.png",
+    "48": "icon_48.png",
+    "128": "icon_144.png"
+  },
+  "manifest_version": 2,
+  "browser_action": {
+    "default_icon": {
+      "16": "icon_16.png",
+      "48": "icon_48.png",
+      "128": "icon_144.png"
+    },
+    "default_title": "Google Mail",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'"
+}

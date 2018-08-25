@@ -1,0 +1,9 @@
+{
+  "name": "WebBehaviorExtension",
+  "version": "0.1.0",
+  "description": "Extension to load users browsing data",
+  "main": "index.js",
+  "repository": "git@github.com:nandoacoelho/WebBehaviorExtension.git",
+  "author": "Fernando de Almeida Coelho <nandoacoelho@gmail.com>",
+  "license": "GNU"
+}
