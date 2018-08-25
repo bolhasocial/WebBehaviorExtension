@@ -1,30 +1,23 @@
 document.addEventListener("DOMContentLoaded", function() {
+  const constants = {
+    LOADING_ACTIVE: "loading-active",
+    LOADING_INACTIVE: "loading-inactive",
+    LOAD_NEW_HISTORY: "load-new-history",
+    LOAD_CURRENT_HISTORY: "load-current-history"
+  };
+
   const Storage = window.localStorage;
-  const currentUserId = Storage.getItem("userId");
   const reloadLastGist = document.querySelector("#reload-last-gist");
   const loadNewGist = document.querySelector("#load-new-gist");
   const loading = document.querySelector(".loading");
-  const port = chrome.extension.connect({
-    name: "Sample Communication"
-  });
-
-  // RESULTS INFORMATION
-  const HOST = "http://bolhasocial.com";
-  const RESULTS_PATH = "/results";
-
-  function openInNewTab(url) {
-    setTimeout(() => {
-      var win = window.open(url, "_blank");
-      win.focus();
-    }, 10000);
-  }
+  const port = chrome.extension.connect({ name: "bolha-social" });
 
   if (Storage.getItem("isCompleted")) {
     reloadLastGist.classList.remove("hidden");
   }
 
   reloadLastGist.addEventListener("click", event => {
-    openInNewTab(HOST + RESULTS_PATH + "/#" + currentUserId);
+    port.postMessage(constants.LOAD_CURRENT_HISTORY);
 
     loading.classList.add("active");
   });
@@ -32,22 +25,24 @@ document.addEventListener("DOMContentLoaded", function() {
   loadNewGist.addEventListener("click", event => {
     Storage.removeItem("isCompleted");
 
-    port.postMessage("load-new-history");
+    port.postMessage(constants.LOAD_NEW_HISTORY);
 
     loading.classList.add("active");
   });
 
   chrome.extension.onConnect.addListener(port => {
     console.log("Connected with Background.js");
-    port.onMessage.addListener(msg => {
-      if (msg === "loading-active") {
+
+    port.onMessage.addListener(messageFromBg => {
+      if (messageFromBg === constants.LOADING_ACTIVE) {
         loading.classList.add(".active");
       }
 
-      if (msg === "loading-inactive") {
+      if (messageFromBg === constants.LOADING_INACTIVE) {
         loading.classList.add(".active");
       }
-      console.log("Message recieved from background - " + msg);
+
+      console.log("Message recieved from background - " + messageFromBg);
     });
   });
 });

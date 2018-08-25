@@ -10,7 +10,8 @@
     DATABBASE_URL = "https://web-behavior.firebaseio.com",
     API_KEY = "AIzaSyBTJb1GOaYeWRLUD8NcTUt9GrTwR6coQMc",
     PROJECT_ID = "web-behavior",
-    MESSAGING_SENDER_ID = "112299024994";
+    MESSAGING_SENDER_ID = "112299024994",
+    PROJECT_NAME = "bolha-social";
 
   // LOCAL STORAGE DATA
   var Storage = window.localStorage,
@@ -25,6 +26,11 @@
   // RESULTS INFORMATION
   var HOST = "http://bolhasocial.com",
     RESULTS_PATH = "/results";
+
+  // POPUP STATES
+  var LOADING_INACTIVE = "loading-inactive",
+    LOAD_NEW_HISTORY = "load-new-history",
+    LOAD_CURRENT_HISTORY = "load-current-history";
 
   var firebaseConfiguration = {
     apiKey: API_KEY,
@@ -41,9 +47,7 @@
     startTime: SIX_MONTHS_IN_MILISECONDS
   };
 
-  var port = chrome.extension.connect({
-    name: "Sample Communication"
-  });
+  var port = chrome.extension.connect({ name: PROJECT_NAME });
 
   firebase.initializeApp(firebaseConfiguration);
 
@@ -116,10 +120,6 @@
   }
 
   function getHistoryGist(historyData, categoriesList) {
-    console.log(
-      "getTotalsPerCategory(categoriesList, historyData)",
-      getTotalsPerCategory(categoriesList, historyData)
-    );
     return {
       totalHistoryAmount: historyData.length,
       totalPerCategory: getTotalsPerCategory(categoriesList, historyData)
@@ -134,30 +134,44 @@
       .then(callback);
   }
 
-  function openInNewTab(url) {
+  function openInNewTab(url, timeout) {
+    var localTimeout = timeout || 10000;
     setTimeout(() => {
       var win = window.open(url, "_blank");
       win.focus();
-    }, 10000);
+    }, localTimeout);
   }
 
   // Connection with Popup.js
   chrome.extension.onConnect.addListener(port => {
     console.log("Connected with Popup.js");
-    port.onMessage.addListener(msg => {
-      if (msg === "reload-last-history") {
-        openInNewTab(HOST + RESULTS_PATH + "/#" + currentUserId);
+
+    port.onMessage.addListener(messageFromPopup => {
+      if (messageFromPopup === LOAD_CURRENT_HISTORY) {
+        openInNewTab(HOST + RESULTS_PATH + "/#" + currentUserId, 10);
       }
 
-      if (msg === "load-new-history") {
+      if (messageFromPopup === LOAD_NEW_HISTORY) {
         loadHistory();
       }
-      console.log("Message recieved from popup - " + msg);
+
+      console.log("Message recieved from popup - " + messageFromPopup);
     });
   });
 
   if (isCompleted) {
     return;
+  }
+
+  function writeHistoryFromUser(userId, processedHistoryData, historyGist) {
+    writeUserHistoryData(userId, processedHistoryData);
+    writeUserHistoryGistData(userId, historyGist);
+
+    openInNewTab(HOST + RESULTS_PATH + "/#" + userId);
+
+    port.postMessage(LOADING_INACTIVE);
+
+    Storage.setItem("isCompleted", "completed");
   }
 
   function loadHistory() {
@@ -173,25 +187,18 @@
         var historyGist = getHistoryGist(processedHistoryData, categoriesList);
 
         if (currentUserId) {
-          writeUserHistoryData(currentUserId, processedHistoryData);
-          writeUserHistoryGistData(currentUserId, historyGist);
-
-          openInNewTab(HOST + RESULTS_PATH + "/#" + currentUserId);
-
-          port.postMessage("loading-inactive");
-          Storage.setItem("isCompleted", "completed");
+          writeHistoryFromUser(
+            currentUserId,
+            processedHistoryData,
+            historyGist
+          );
         } else {
           var newUserId = gguid();
-
-          writeUserHistoryData("user-" + newUserId, processedHistoryData);
-          writeUserHistoryGistData("user-" + newUserId, historyGist);
-
-          Storage.setItem("userId", "user-" + newUserId);
-
-          openInNewTab(HOST + RESULTS_PATH + "/#user-" + newUserId);
-
-          port.postMessage("loading-inactive");
-          Storage.setItem("isCompleted", "completed");
+          writeHistoryFromUser(
+            "user-" + newUserId,
+            processedHistoryData,
+            historyGist
+          );
         }
       })
     );

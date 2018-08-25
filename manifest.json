@@ -2,7 +2,7 @@
   "name": "Bolha Social",
   "description": "Extensão para analisar o seu histórico mostrando seu comportamento na internet",
   "short_description": "Extensão para analisar o seu histórico mostrando seu comportamento na internet",
-  "version": "0.0.10",
+  "version": "1.0.1",
   "incognito": "split",
   "background": {
     "page": "background.html"
